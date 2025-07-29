@@ -42,6 +42,8 @@ function App() {
     participants: []
   });
 
+  const [selectedRecipient, setSelectedRecipient] = useState<string>('');
+
   const [newParticipant, setNewParticipant] = useState<string>('');
 
   const fetchAttendees = async () => {
@@ -93,10 +95,15 @@ function App() {
 
   const addPayment = async () => {
     try {
+      const paymentData = {
+        ...paymentForm,
+        participants: selectedRecipient ? [selectedRecipient] : []
+      };
+      
       const response = await fetch('/api/payments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(paymentForm)
+        body: JSON.stringify(paymentData)
       });
       if (response.ok) {
         setPaymentForm({
@@ -106,6 +113,7 @@ function App() {
           event: currentEvent,
           participants: []
         });
+        setSelectedRecipient('');
         fetchSummary();
       }
     } catch (error) {
@@ -348,6 +356,21 @@ function App() {
               value={paymentForm.event}
               onChange={(e) => setPaymentForm({ ...paymentForm, event: e.target.value })}
             />
+          </div>
+          <div className="form-group">
+            <label>Recipient</label>
+            <select
+              value={selectedRecipient}
+              onChange={(e) => setSelectedRecipient(e.target.value)}
+              className="form-select"
+            >
+              <option value="">Select a recipient...</option>
+              {attendees.map((attendee) => (
+                <option key={attendee} value={attendee}>
+                  {attendee}
+                </option>
+              ))}
+            </select>
           </div>
           <button onClick={addPayment} className="btn btn-primary">
             Add Payment
