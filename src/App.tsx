@@ -27,7 +27,7 @@ function App() {
   const [attendees, setAttendees] = useState<string[]>([]);
 
   const [expenseForm, setExpenseForm] = useState<Expense>({
-    amount: 0,
+    amount: 0.0,
     person: '',
     description: '',
     event: 'team_outing',
@@ -73,6 +73,18 @@ function App() {
 
   const addExpense = async () => {
     try {
+
+
+const expenseData = {
+  ...expenseForm,
+  amount: parseFloat(expenseForm.amount.toFixed(2))
+};
+
+    console.log('About to send expense:', expenseData);
+    console.log('Amount type:', typeof expenseData.amount);
+    console.log('Amount value:', expenseData.amount);
+    console.log('JSON stringified:', JSON.stringify(expenseData));
+
       const response = await fetch('/api/expenses', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -80,7 +92,7 @@ function App() {
       });
       if (response.ok) {
         setExpenseForm({
-          amount: 0,
+          amount: 0.0,
           person: '',
           description: '',
           event: currentEvent,
@@ -234,7 +246,7 @@ function App() {
               type="number"
               step="0.01"
               value={expenseForm.amount}
-              onChange={(e) => setExpenseForm({ ...expenseForm, amount: parseFloat(e.target.value) || 0 })}
+              onChange={(e) => setExpenseForm({ ...expenseForm, amount: parseFloat(e.target.value) || 0.0 })}
             />
           </div>
           <div className="form-group">

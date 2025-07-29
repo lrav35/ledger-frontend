@@ -9,36 +9,12 @@ console.log('Setting up server with routes:', Object.keys({
 }));
 
 
-// Bun.serve({
-//   port: 3000,
-//   routes: {
-//     "/": indexHtml,
-//     "/api/attendees": {
-//       GET: async () => {
-//         console.log('ATTENDEES ENDPOINT HIT');
-//         return new Response("ATTENDEES RESPONSE");
-//       }
-//     },
-//     "/test": {
-//       GET: () => {
-//         console.log('TEST ENDPOINT HIT');
-//         return new Response("Hello World");
-//       }
-//     }
-//   }
-// });
-
 Bun.serve({
   port: 3000,
   routes: {
     "/": indexHtml,
     "/api/attendees": {
       GET: async () => {
-        console.log('GET /api/attendees called');
-
-    console.log('GET /api/attendees called');
-    console.log('Current working directory:', process.cwd());
-    console.log('__dirname equivalent:', import.meta.dir); // Bun specific
         try {
       const filePath = "./attendees.txt";
       console.log('Trying to read file at path:', filePath);
@@ -103,16 +79,28 @@ Bun.serve({
       POST: async (req) => {
         try {
           const body = await req.json();
+          console.log(body);
+          console.log(API_BASE_URL);
           const response = await fetch(`${API_BASE_URL}/expenses`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
           });
+
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.log('Error response body:', errorText);
+        throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
+      }
           const data = await response.json();
           return new Response(JSON.stringify(data), {
             headers: { 'Content-Type': 'application/json' }
           });
         } catch (error) {
+          console.log(error.message);
           return new Response(JSON.stringify({ error: 'Failed to add expense' }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
