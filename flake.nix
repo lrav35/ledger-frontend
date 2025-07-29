@@ -33,10 +33,10 @@
             
             # Create wrapper script
             cat > $out/bin/ledger-frontend << 'EOF'
-#!/bin/sh
-cd $out/share/ledger-frontend
-exec ${pkgs.bun}/bin/bun run index.ts
-EOF
+            #!/bin/sh
+            cd $out/share/ledger-frontend
+            exec ${pkgs.bun}/bin/bun run index.ts
+            EOF
             chmod +x $out/bin/ledger-frontend
           '';
         };
