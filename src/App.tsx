@@ -247,6 +247,11 @@ const expenseData = {
               step="0.01"
               value={expenseForm.amount}
               onChange={(e) => setExpenseForm({ ...expenseForm, amount: parseFloat(e.target.value) || 0.0 })}
+              onFocus={(e) => {
+                if (expenseForm.amount === 0) {
+                  e.target.select();
+                }
+              }}
             />
           </div>
           <div className="form-group">
@@ -336,6 +341,11 @@ const expenseData = {
               step="0.01"
               value={paymentForm.amount}
               onChange={(e) => setPaymentForm({ ...paymentForm, amount: parseFloat(e.target.value) || 0 })}
+              onFocus={(e) => {
+                if (paymentForm.amount === 0) {
+                  e.target.select();
+                }
+              }}
             />
           </div>
           <div className="form-group">
