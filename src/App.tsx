@@ -150,6 +150,14 @@ function App() {
     }
   };
 
+  const addAllParticipantsToExpense = () => {
+    const availableAttendees = attendees.filter(attendee => !expenseForm.participants.includes(attendee));
+    setExpenseForm({
+      ...expenseForm,
+      participants: [...expenseForm.participants, ...availableAttendees]
+    });
+  };
+
   const removeParticipantFromExpense = (participant: string) => {
     setExpenseForm({
       ...expenseForm,
@@ -270,6 +278,9 @@ function App() {
               </select>
               <button onClick={addParticipantToExpense} className="btn btn-secondary" style={{ flexShrink: 0 }}>
                 Add
+              </button>
+              <button onClick={addAllParticipantsToExpense} className="btn btn-secondary" style={{ flexShrink: 0 }}>
+                Add All
               </button>
             </div>
           </div>
