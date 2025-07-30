@@ -17,11 +17,46 @@ interface Payment {
   participants: string[];
 }
 
+interface DebtRelation {
+  creditor: string;
+  amount: number;
+}
+
+interface IndividualBalance {
+  name: string;
+  paid: number;
+  balance: number;
+  status: 'owed' | 'owes';
+  owes_to: DebtRelation[];
+}
+
+interface Transaction {
+  date: string;
+  type: 'expense' | 'payment';
+  amount: number;
+  person: string;
+  description: string;
+  participants: string[];
+}
+
+interface SummaryData {
+  event: string;
+  total_expenses: number;
+  attendee_count: number;
+  individual_balances: IndividualBalance[];
+  transactions: Transaction[];
+}
+
+interface SummaryResponse {
+  status: string;
+  summary: SummaryData | { message: string };
+}
+
 function App() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
-  const [summary, setSummary] = useState<string>('');
-  const [currentEvent, setCurrentEvent] = useState<string>('team_outing');
+  const [summary, setSummary] = useState<SummaryData | { message: string } | null>(null);
+  const [currentEvent, setCurrentEvent] = useState<string>('bach weekend');
   const [activeTab, setActiveTab] = useState<'expenses' | 'payments' | 'summary'>('expenses');
   const [showBoot, setShowBoot] = useState<boolean>(true);
   const [attendees, setAttendees] = useState<string[]>([]);
@@ -30,7 +65,7 @@ function App() {
     amount: 0.0,
     person: '',
     description: '',
-    event: 'team_outing',
+    event: 'bach weekend',
     participants: []
   });
 
@@ -38,7 +73,7 @@ function App() {
     amount: 0,
     person: '',
     description: '',
-    event: 'team_outing',
+    event: 'bach weekend',
     participants: []
   });
 
@@ -137,7 +172,7 @@ const expenseData = {
     try {
       const response = await fetch(`/api/summary/${currentEvent}`);
       if (response.ok) {
-        const data = await response.json();
+        const data: SummaryResponse = await response.json();
         setSummary(data.summary);
       }
     } catch (error) {
@@ -407,7 +442,86 @@ const expenseData = {
             Refresh Summary
           </button>
           <div className="summary-display">
-            {summary}
+            {summary === null ? (
+              <div>Loading...</div>
+            ) : 'message' in summary ? (
+              <div className="no-transactions">
+                <p>{summary.message}</p>
+              </div>
+            ) : (
+              <div className="detailed-summary">
+                <div className="summary-header">
+                  <h3>Event: {summary.event}</h3>
+                  <div className="summary-stats">
+                    <div className="stat">
+                      <strong>Total Expenses:</strong> ${summary.total_expenses.toFixed(2)}
+                    </div>
+                    <div className="stat">
+                      <strong>Attendees:</strong> {summary.attendee_count}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="balances-section">
+                  <h4>Individual Balances</h4>
+                  <div className="balances-grid">
+                    {summary.individual_balances.map((balance, index) => (
+                      <div key={index} className={`balance-card ${balance.status}`}>
+                        <div className="balance-header">
+                          <strong>{balance.name}</strong>
+                          <span className={`status-badge ${balance.status}`}>
+                            {balance.status === 'owed' ? 'Is Owed' : 'Owes Money'}
+                          </span>
+                        </div>
+                        <div className="balance-details">
+                          <div>Paid: ${balance.paid.toFixed(2)}</div>
+                          <div className={`balance-amount ${balance.balance >= 0 ? 'positive' : 'negative'}`}>
+                            Balance: ${balance.balance.toFixed(2)}
+                          </div>
+                        </div>
+                        {balance.owes_to.length > 0 && (
+                          <div className="owes-section">
+                            <div className="owes-header">Owes:</div>
+                            {balance.owes_to.map((debt, debtIndex) => (
+                              <div key={debtIndex} className="debt-item">
+                                ${debt.amount.toFixed(2)} to {debt.creditor}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {summary.transactions.length > 0 && (
+                  <div className="transactions-section">
+                    <h4>Recent Transactions</h4>
+                    <div className="transactions-list">
+                      {summary.transactions.map((transaction, index) => (
+                        <div key={index} className={`transaction-item ${transaction.type}`}>
+                          <div className="transaction-header">
+                            <span className="transaction-date">{transaction.date}</span>
+                            <span className={`transaction-type ${transaction.type}`}>
+                              {transaction.type === 'expense' ? 'Expense' : 'Payment'}
+                            </span>
+                            <span className="transaction-amount">
+                              ${transaction.amount.toFixed(2)}
+                            </span>
+                          </div>
+                          <div className="transaction-details">
+                            <div><strong>{transaction.person}</strong> - {transaction.description}</div>
+                            <div className="participants">
+                              Participants: {transaction.participants.join(', ')}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
