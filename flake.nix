@@ -14,23 +14,35 @@
       {
         packages.default = pkgs.stdenv.mkDerivation {
           name = "ledger-frontend";
-          src = ./.;
+          
+          # Include all files, even those in .gitignore
+          src = pkgs.lib.cleanSourceWith {
+            src = ./.;
+            filter = path: type: 
+              let
+                baseName = baseNameOf path;
+              in
+                # Include everything except .git directory
+                baseName != ".git";
+          };
 
           nativeBuildInputs = [
             pkgs.bun
             pkgs.nodejs
           ];
 
-          dontConfigure = true;
-
           buildPhase = ''
-            echo "Using existing node_modules, skipping dependency installation"
-            # Verify node_modules exists
-            if [ ! -d "node_modules" ]; then
-              echo "Error: node_modules directory not found"
+            echo "Checking for node_modules..."
+            ls -la
+            
+            if [ -d "node_modules" ]; then
+              echo "Using existing node_modules directory"
+            else
+              echo "ERROR: node_modules directory not found!"
+              echo "Available files:"
+              ls -la
               exit 1
             fi
-            echo "node_modules found, proceeding with build"
           '';
 
           installPhase = ''
@@ -40,13 +52,19 @@
             # Copy all files including node_modules
             cp -r . $out/share/ledger-frontend/
             
-            # Create wrapper script
-            cat > $out/bin/ledger-frontend << 'EOF'
+            # Create wrapper script with correct path
+            cat > $out/bin/ledger-frontend << EOF
 #!/bin/sh
 cd $out/share/ledger-frontend
-exec ${pkgs.bun}/bin/bun run index.ts "$@"
+exec ${pkgs.bun}/bin/bun run index.ts "\$@"
 EOF
             chmod +x $out/bin/ledger-frontend
+            
+            # Debug output
+            echo "Files copied to $out/share/ledger-frontend:"
+            ls -la $out/share/ledger-frontend/
+            echo "Checking for index.ts:"
+            ls -la $out/share/ledger-frontend/index.ts || echo "index.ts not found!"
           '';
         };
 
@@ -57,6 +75,7 @@ EOF
           ];
         };
       }) // {
+        # NixOS module for your configuration.nix
         nixosModules.ledger-frontend = { config, pkgs, ... }: {
           imports = [ ./ledger-frontend-service.nix ];
           nixpkgs.overlays = [
