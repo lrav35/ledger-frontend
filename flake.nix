@@ -16,27 +16,36 @@
           name = "ledger-frontend";
           src = ./.;
 
-          buildInputs = [
+          nativeBuildInputs = [
             pkgs.bun
             pkgs.nodejs
           ];
 
+          dontConfigure = true;
+
           buildPhase = ''
-            export HOME=$TMPDIR
-            bun install --frozen-lockfile
+            echo "Using existing node_modules, skipping dependency installation"
+            # Verify node_modules exists
+            if [ ! -d "node_modules" ]; then
+              echo "Error: node_modules directory not found"
+              exit 1
+            fi
+            echo "node_modules found, proceeding with build"
           '';
 
           installPhase = ''
             mkdir -p $out/bin
             mkdir -p $out/share/ledger-frontend
+            
+            # Copy all files including node_modules
             cp -r . $out/share/ledger-frontend/
             
             # Create wrapper script
             cat > $out/bin/ledger-frontend << 'EOF'
-            #!/bin/sh
-            cd $out/share/ledger-frontend
-            exec ${pkgs.bun}/bin/bun run index.ts
-            EOF
+#!/bin/sh
+cd $out/share/ledger-frontend
+exec ${pkgs.bun}/bin/bun run index.ts "$@"
+EOF
             chmod +x $out/bin/ledger-frontend
           '';
         };
